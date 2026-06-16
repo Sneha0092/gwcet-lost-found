@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GWCET Lost & Found Portal</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --maroon:#7B1C1C;--maroon2:#9e2424;--gold:#D4A017;--gold-light:#FBF0D1;
+  --green:#2E6E3E;--green-bg:#E8F5EE;
+  --blue:#1A5AA8;--blue-bg:#E6EFF9;
+  --amber-bg:#FEF3DC;--amber-text:#7A4800;
+  --gray-bg:#F4F2EE;--gray-text:#444;
+  --border:#DDD;--text:#1A1A1A;--text2:#555;--text3:#999;
+  --surface:#F9F8F6;--white:#FFF;
+  --radius:10px;--radius-sm:6px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#EDE9E3;color:var(--text);min-height:100vh}
+
+/* TOP BAR */
+.topbar{background:var(--maroon);color:#fff;padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:3px solid var(--gold)}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-logo{width:38px;height:38px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--maroon);flex-shrink:0}
+.brand-name{font-size:16px;font-weight:700;letter-spacing:0.01em}
+.brand-sub{font-size:11px;color:rgba(255,255,255,0.65);margin-top:1px}
+.tab-bar{display:flex;gap:6px}
+.tab-btn{padding:6px 16px;font-size:13px;border-radius:20px;border:0.5px solid rgba(255,255,255,0.3);background:transparent;color:rgba(255,255,255,0.7);cursor:pointer;transition:all .15s}
+.tab-btn.active{background:var(--gold);color:var(--maroon);border-color:var(--gold);font-weight:700}
+.topbar-stats{font-size:12px;color:rgba(255,255,255,0.65);display:flex;gap:18px}
+.topbar-stats b{color:var(--gold)}
+
+/* LAYOUT */
+.container{max-width:1080px;margin:0 auto;padding:22px 18px}
+.main-grid{display:grid;grid-template-columns:370px 1fr;gap:18px;align-items:start}
+
+/* PANELS */
+.panel{background:var(--white);border-radius:var(--radius);border:0.5px solid var(--border);overflow:hidden}
+.panel-head{padding:14px 18px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px}
+.panel-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.icon-lost{background:var(--blue-bg);color:var(--blue)}
+.icon-found{background:var(--green-bg);color:var(--green)}
+.icon-staff{background:var(--amber-bg);color:var(--amber-text)}
+.panel-title{font-size:14px;font-weight:600}
+.panel-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.panel-body{padding:16px 18px}
+
+/* FORM */
+.form-group{margin-bottom:12px}
+label{display:block;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+input,select,textarea{width:100%;font-size:13px;padding:8px 10px;border:0.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-family:inherit;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--maroon)}
+textarea{resize:none;height:68px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.btn-primary{width:100%;padding:10px;margin-top:4px;background:var(--maroon);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .15s}
+.btn-primary:hover{background:var(--maroon2)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+
+/* STATUS */
+.status-box{margin-top:12px;padding:11px 14px;border-radius:var(--radius-sm);font-size:13px;display:none}
+.status-box.show{display:block}
+.status-success{background:var(--green-bg);color:var(--green);border:0.5px solid #8fcca6}
+.status-error{background:#FCEBEB;color:#A32D2D;border:0.5px solid #f09595}
+.status-loading{background:var(--blue-bg);color:var(--blue);border:0.5px solid #85b7eb}
+
+/* FOUND LIST */
+.filter-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.fchip{font-size:11px;padding:5px 12px;border:0.5px solid var(--border);border-radius:20px;cursor:pointer;color:var(--text2);background:transparent;transition:all .15s}
+.fchip.active{background:var(--maroon);color:#fff;border-color:var(--maroon)}
+.found-list{display:flex;flex-direction:column;gap:10px}
+.found-card{border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;cursor:pointer;transition:all .15s}
+.found-card:hover{border-color:var(--maroon);box-shadow:0 2px 8px rgba(123,28,28,.08)}
+.found-card.highlighted{border-color:var(--maroon);background:#FDF5F5}
+.fc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.fc-title{font-size:13px;font-weight:600}
+.fc-loc{font-size:11px;color:var(--text3);margin-top:3px}
+.fc-time{font-size:11px;color:var(--text3);flex-shrink:0}
+.match-pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.pill-high{background:var(--green-bg);color:var(--green)}
+.pill-med{background:var(--amber-bg);color:var(--amber-text)}
+.pill-low{background:var(--gray-bg);color:var(--gray-text)}
+.match-bar-wrap{margin-top:9px;height:3px;background:#eee;border-radius:2px;overflow:hidden}
+.match-bar{height:100%;border-radius:2px;transition:width .5s ease}
+.bar-high{background:#2E6E3E}
+.bar-med{background:#B07D00}
+.bar-low{background:#aaa}
+.empty-state{text-align:center;padding:36px 20px;color:var(--text3)}
+.empty-state i{font-size:30px;display:block;margin-bottom:10px}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:20px}
+.overlay.show{display:flex}
+.modal{background:var(--white);border-radius:var(--radius);padding:22px;max-width:510px;width:100%;position:relative;max-height:90vh;overflow-y:auto;border:0.5px solid var(--border)}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;color:var(--text3);cursor:pointer;line-height:1}
+.modal-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:12px}
+.badge-high{background:var(--green-bg);color:var(--green)}
+.badge-med{background:var(--amber-bg);color:var(--amber-text)}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:12px;color:var(--text3);margin-bottom:16px}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.compare-col{padding:12px;border-radius:var(--radius-sm)}
+.col-lost{background:var(--blue-bg)}
+.col-found{background:var(--green-bg)}
+.col-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.col-label-lost{color:var(--blue)}
+.col-label-found{color:var(--green)}
+.col-item{font-size:13px;font-weight:600}
+.col-detail{font-size:11px;color:var(--text2);margin-top:3px}
+.ai-box{background:var(--surface);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;border:0.5px solid var(--border)}
+.ai-box-title{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ai-reason{font-size:12px;color:var(--text);padding:3px 0;display:flex;gap:7px;align-items:flex-start}
+.ai-reason i{color:var(--green);font-size:12px;margin-top:2px;flex-shrink:0}
+.storage-info{background:var(--gold-light);padding:10px 12px;border-radius:var(--radius-sm);margin-bottom:14px;font-size:12px;color:#6B4A00;display:flex;align-items:center;gap:7px;border:0.5px solid #E8C96A}
+.btn-claim{width:100%;padding:12px;background:var(--maroon);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer}
+.btn-claim:hover{background:var(--maroon2)}
+
+/* STAFF */
+.staff-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.stats-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--white);border-radius:var(--radius);border:0.5px solid var(--border);padding:14px 16px}
+.stat-val{font-size:26px;font-weight:800;margin-bottom:2px}
+.stat-label{font-size:11px;color:var(--text3)}
+.stat-lost .stat-val{color:var(--blue)}
+.stat-found .stat-val{color:var(--green)}
+.stat-match .stat-val{color:var(--amber-text)}
+.stat-claim .stat-val{color:var(--maroon)}
+
+.live{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3)}
+.dot{width:6px;height:6px;background:#2E6E3E;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.divider{height:0.5px;background:var(--border);margin:14px 0}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-logo">GW</div>
+    <div>
+      <div class="brand-name">GWCET Lost &amp; Found</div>
+      <div class="brand-sub">Govindrao Wanjari College of Engineering &amp; Technology, Nagpur</div>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('student',this)">Student</button>
+    <button class="tab-btn" onclick="switchTab('staff',this)">Staff / Admin</button>
+  </div>
+  <div class="topbar-stats">
+    <span><b id="ts-found">–</b> items in custody</span>
+    <span><b id="ts-matched">–</b> matched</span>
+  </div>
+</div>
+
+<!-- STUDENT TAB -->
+<div id="tab-student" class="container">
+  <div class="main-grid">
+
+    <div>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-icon icon-lost"><i class="fas fa-question-circle"></i></div>
+          <div>
+            <div class="panel-title">Report a lost item</div>
+            <div class="panel-sub">AI instantly searches all found items on campus</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="row2">
+            <div class="form-group">
+              <label>Your name</label>
+              <input type="text" id="studentName" placeholder="Full name"/>
+            </div>
+            <div class="form-group">
+              <label>Roll number</label>
+              <input type="text" id="rollNo" placeholder="e.g. CSE2023041"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Item category</label>
+            <select id="itemType">
+              <option value="">Select category</option>
+              <option value="bag">Bag / Backpack</option>
+              <option value="electronics">Electronics (phone, earbuds, calculator)</option>
+              <option value="wallet">Wallet / Purse / Cash</option>
+              <option value="id_card">College ID / Library Card</option>
+              <option value="stationery">Stationery / Books / Notes</option>
+              <option value="keys">Keys (bike, room, locker)</option>
+              <option value="clothing">Clothing / Accessories</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="itemDesc" placeholder="Colour, brand, size, any name/label, distinguishing marks…"></textarea>
+          </div>
+          <div class="row2">
+            <div class="form-group">
+              <label>Where lost</label>
+              <select id="locationLost">
+                <option>CSE Department</option>
+                <option>Mechanical Department</option>
+                <option>Civil Department</option>
+                <option>Electronics Department</option>
+                <option>Library</option>
+                <option>Canteen</option>
+                <option>Exam Hall</option>
+                <option>Seminar Hall</option>
+                <option>Parking Lot</option>
+                <option>Boys Hostel</option>
+                <option>Girls Hostel</option>
+                <option>Sports Ground</option>
+                <option>Main Gate</option>
+                <option>Not sure</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date &amp; time</label>
+              <input type="datetime-local" id="lostTime"/>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="form-group">
+              <label>Email (college ID)</label>
+              <input type="email" id="contactEmail" placeholder="roll@gwcet.ac.in"/>
+            </div>
+            <div class="form-group">
+              <label>Phone number</label>
+              <input type="tel" id="contactPhone" placeholder="10-digit number"/>
+            </div>
+          </div>
+          <button class="btn-primary" id="searchBtn" onclick="reportLost()">
+            <i class="fas fa-magic"></i> Find matches with AI
+          </button>
+          <div class="status-box" id="lostStatus"></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-icon icon-found"><i class="fas fa-box-open"></i></div>
+          <div>
+            <div class="panel-title">Items in custody</div>
+            <div class="panel-sub">Submitted by college staff across all departments</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="filter-row">
+            <button class="fchip active" onclick="setFilter('all',this)">All</button>
+            <button class="fchip" onclick="setFilter('bag',this)">Bags</button>
+            <button class="fchip" onclick="setFilter('electronics',this)">Electronics</button>
+            <button class="fchip" onclick="setFilter('wallet',this)">Wallets</button>
+            <button class="fchip" onclick="setFilter('id_card',this)">ID Cards</button>
+            <button class="fchip" onclick="setFilter('keys',this)">Keys</button>
+            <button class="fchip" onclick="setFilter('stationery',this)">Stationery</button>
+          </div>
+          <div class="found-list" id="foundList">
+            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i>Loading items…</div>
+          </div>
+        </div>
+      </div>
+      <div class="live" style="margin-top:8px;padding:0 4px">
+        <div class="dot"></div> Live — refreshed every 60 seconds
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- STAFF TAB -->
+<div id="tab-staff" class="container" style="display:none">
+  <div class="stats-cards">
+    <div class="stat-card stat-lost"><div class="stat-val" id="sc-lost">–</div><div class="stat-label">Lost reports</div></div>
+    <div class="stat-card stat-found"><div class="stat-val" id="sc-found">–</div><div class="stat-label">Items in custody</div></div>
+    <div class="stat-card stat-match"><div class="stat-val" id="sc-match">–</div><div class="stat-label">High-confidence matches</div></div>
+    <div class="stat-card stat-claim"><div class="stat-val" id="sc-claim">–</div><div class="stat-label">Claims submitted</div></div>
+  </div>
+  <div class="staff-grid">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-icon icon-staff"><i class="fas fa-plus-circle"></i></div>
+        <div>
+          <div class="panel-title">Log a found item</div>
+          <div class="panel-sub">Record items handed in or found by staff</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="form-group">
+          <label>Item category</label>
+          <select id="s-itemType">
+            <option value="">Select category</option>
+            <option value="bag">Bag / Backpack</option>
+            <option value="electronics">Electronics</option>
+            <option value="wallet">Wallet / Purse / Cash</option>
+            <option value="id_card">College ID / Library Card</option>
+            <option value="stationery">Stationery / Books / Notes</option>
+            <option value="keys">Keys</option>
+            <option value="clothing">Clothing / Accessories</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="s-itemDesc" placeholder="Colour, brand, any name labels, condition…"></textarea>
+        </div>
+        <div class="row2">
+          <div class="form-group">
+            <label>Where found</label>
+            <select id="s-location">
+              <option>CSE Department — Lab</option>
+              <option>CSE Department — Classroom</option>
+              <option>Mechanical Dept</option>
+              <option>Civil Dept</option>
+              <option>Electronics Dept</option>
+              <option>Library</option>
+              <option>Canteen</option>
+              <option>Exam Hall A</option>
+              <option>Exam Hall B</option>
+              <option>Seminar Hall 1</option>
+              <option>Seminar Hall 2</option>
+              <option>Parking Lot</option>
+              <option>Boys Hostel</option>
+              <option>Girls Hostel</option>
+              <option>Sports Ground</option>
+              <option>Main Gate</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Storage location</label>
+            <select id="s-storage">
+              <option>Admin Office</option>
+              <option>HOD Office — CSE</option>
+              <option>HOD Office — Mechanical</option>
+              <option>Library Counter</option>
+              <option>Security Cabin</option>
+              <option>Hostel Office</option>
+              <option>Sports Room</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Reported by</label>
+          <input type="text" id="s-reporter" placeholder="e.g. Lab Assistant, Canteen Staff"/>
+        </div>
+        <button class="btn-primary" id="logBtn" onclick="logFound()">
+          <i class="fas fa-check"></i> Log found item
+        </button>
+        <div class="status-box" id="staffStatus"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-icon icon-found"><i class="fas fa-list-ul"></i></div>
+        <div>
+          <div class="panel-title">Recent found items</div>
+          <div class="panel-sub">All departments &amp; locations</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="found-list" id="staffFoundList">
+          <div class="empty-state"><i class="fas fa-inbox"></i>Loading…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    <div class="modal-badge" id="modalBadge"><i class="fas fa-magic"></i> <span id="modalScore"></span> match</div>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-sub" id="modalSub"></div>
+    <div class="compare-grid">
+      <div class="compare-col col-lost">
+        <div class="col-label col-label-lost"><i class="fas fa-question-circle"></i> You reported</div>
+        <div class="col-item" id="m-lostItem"></div>
+        <div class="col-detail" id="m-lostDetail"></div>
+      </div>
+      <div class="compare-col col-found">
+        <div class="col-label col-label-found"><i class="fas fa-box-open"></i> In custody</div>
+        <div class="col-item" id="m-foundItem"></div>
+        <div class="col-detail" id="m-foundDetail"></div>
+      </div>
+    </div>
+    <div class="ai-box">
+      <div class="ai-box-title"><i class="fas fa-brain"></i> Why AI matched this</div>
+      <div id="m-reasons"></div>
+    </div>
+    <div class="storage-info" id="m-storage">
+      <i class="fas fa-map-marker-alt"></i>
+      <span id="m-storageText"></span>
+    </div>
+    <button class="btn-claim" onclick="submitClaim()">
+      <i class="fas fa-id-card"></i> Submit claim — I'll bring my college ID
+    </button>
+  </div>
+</div>
+
+<script>
+let currentMatchData = null;
+let currentLostId = null;
+let currentFilter = 'all';
+
+function switchTab(tab, el) {
+  document.getElementById('tab-student').style.display = tab==='student'?'block':'none';
+  document.getElementById('tab-staff').style.display = tab==='staff'?'block':'none';
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(tab==='staff'){ loadStats(); loadStaffFoundList(); }
+}
+
+async function loadFoundItems(filter='all', matchMap={}) {
+  const list = document.getElementById('foundList');
+  try {
+    const url = filter && filter!=='all' ? `/api/found-items?category=${filter}` : '/api/found-items';
+    const res = await fetch(url);
+    const items = await res.json();
+    if(!items.length){ list.innerHTML='<div class="empty-state"><i class="fas fa-inbox"></i>No items in this category right now.</div>'; return; }
+    const hasMatches = Object.keys(matchMap).length > 0;
+    const sorted = hasMatches ? [...items].sort((a,b)=>(matchMap[b.id]?.score||0)-(matchMap[a.id]?.score||0)) : items;
+    list.innerHTML = sorted.map(item=>{
+      const m = matchMap[item.id];
+      const score = m?.score||0;
+      const hl = !!m;
+      const pillClass = score>=70?'pill-high':score>=50?'pill-med':'pill-low';
+      const barClass = score>=70?'bar-high':score>=50?'bar-med':'bar-low';
+      return `<div class="found-card${hl?' highlighted':''}" onclick="openCard(${item.id},${JSON.stringify(m||null).replace(/"/g,'&quot;')})">
+        <div class="fc-top">
+          <div>
+            <div class="fc-title">${capType(item.item_type)}: ${trunc(item.description,55)}</div>
+            <div class="fc-loc"><i class="fas fa-map-pin"></i> ${item.location}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            ${hl?`<span class="match-pill ${pillClass}">${score}% match</span>`:''}
+            <span class="fc-time">${ago(item.created_at)}</span>
+          </div>
+        </div>
+        <div class="match-bar-wrap"><div class="match-bar ${barClass}" style="width:${hl?score:10}%"></div></div>
+      </div>`;
+    }).join('');
+  } catch(e){ list.innerHTML='<div class="empty-state"><i class="fas fa-wifi"></i>Could not connect to server.</div>'; }
+}
+
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  loadFoundItems(f);
+}
+
+async function reportLost() {
+  const type = document.getElementById('itemType').value;
+  const desc = document.getElementById('itemDesc').value.trim();
+  const loc = document.getElementById('locationLost').value;
+  if(!type||!desc){ showStatus('lostStatus','Please select a category and describe the item.','error'); return; }
+  const btn = document.getElementById('searchBtn');
+  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Searching with AI…';
+  showStatus('lostStatus','Submitting report and running AI matching — this may take a few seconds…','loading');
+  try {
+    const res = await fetch('/api/report-lost',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        student_name: document.getElementById('studentName').value,
+        roll_number: document.getElementById('rollNo').value,
+        item_type: type, description: desc, location: loc,
+        lost_time: document.getElementById('lostTime').value,
+        contact_email: document.getElementById('contactEmail').value,
+        contact_phone: document.getElementById('contactPhone').value
+      })
+    });
+    const data = await res.json();
+    currentLostId = data.lost_id;
+    if(data.matches && data.matches.length){
+      const matchMap = {};
+      data.matches.forEach(m=>{ matchMap[m.found_id]={score:m.score,reasons:m.reasons}; });
+      showStatus('lostStatus',`✓ Report saved (ID: ${data.lost_id}). Found ${data.matches.length} potential match${data.matches.length>1?'es':''}! Highlighted below.`,'success');
+      loadFoundItems('all', matchMap);
+    } else {
+      showStatus('lostStatus',`✓ Report saved (ID: ${data.lost_id}). No strong matches yet. You'll be contacted when something comes in.`,'success');
+      loadFoundItems('all');
+    }
+  } catch(e){ showStatus('lostStatus','Server error. Make sure server.py is running.','error'); }
+  btn.disabled=false; btn.innerHTML='<i class="fas fa-magic"></i> Find matches with AI';
+}
+
+async function openCard(foundId, matchData) {
+  try {
+    const res = await fetch('/api/found-items');
+    const items = await res.json();
+    const item = items.find(i=>i.id===foundId);
+    if(!item) return;
+    const score = matchData?.score||0;
+    document.getElementById('modalBadge').className = `modal-badge ${score>=70?'badge-high':score>=50?'badge-med':'badge-med'}`;
+    document.getElementById('modalScore').textContent = score ? `${score}%` : 'Details';
+    document.getElementById('modalTitle').textContent = score ? 'Potential match found' : `${capType(item.item_type)}: ${trunc(item.description,50)}`;
+    document.getElementById('modalSub').textContent = `Found at: ${item.location} · Reported by: ${item.reported_by}`;
+    document.getElementById('m-lostItem').textContent = document.getElementById('itemDesc').value || 'Your lost item';
+    document.getElementById('m-lostDetail').textContent = document.getElementById('locationLost').value;
+    document.getElementById('m-foundItem').textContent = item.description;
+    document.getElementById('m-foundDetail').textContent = `Found: ${item.found_time||'Recently'}`;
+    document.getElementById('m-reasons').innerHTML = matchData?.reasons?.length
+      ? matchData.reasons.map(r=>`<div class="ai-reason"><i class="fas fa-check-circle"></i>${r}</div>`).join('')
+      : '<div class="ai-reason"><i class="fas fa-info-circle"></i>Submit a lost report to see AI match reasons.</div>';
+    document.getElementById('m-storageText').textContent = `Collect from: ${item.storage_location||'Admin Office'} · Bring your college ID card`;
+    currentMatchData = { found_id: foundId, lost_id: currentLostId, match_id: null };
+    document.getElementById('overlay').classList.add('show');
+  } catch(e){}
+}
+
+function closeModal(){ document.getElementById('overlay').classList.remove('show'); }
+
+async function submitClaim() {
+  if(!currentMatchData){ alert('Please submit a lost item report first.'); return; }
+  try {
+    await fetch('/api/claim',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({...currentMatchData, contact_email: document.getElementById('contactEmail').value})
+    });
+    closeModal();
+    showStatus('lostStatus','✓ Claim submitted! Visit the Admin Office with your college ID card to collect your item.','success');
+    loadFoundItems(currentFilter);
+    loadStats();
+  } catch(e){ alert('Could not submit claim. Please try again.'); }
+}
+
+async function loadStats() {
+  try {
+    const res = await fetch('/api/stats');
+    const s = await res.json();
+    document.getElementById('sc-lost').textContent = s.total_lost;
+    document.getElementById('sc-found').textContent = s.total_found;
+    document.getElementById('sc-match').textContent = s.total_matched;
+    document.getElementById('sc-claim').textContent = s.total_claimed;
+    document.getElementById('ts-found').textContent = s.total_found;
+    document.getElementById('ts-matched').textContent = s.total_matched;
+  } catch(e){}
+}
+
+async function loadStaffFoundList() {
+  const list = document.getElementById('staffFoundList');
+  try {
+    const res = await fetch('/api/found-items');
+    const items = await res.json();
+    if(!items.length){ list.innerHTML='<div class="empty-state"><i class="fas fa-inbox"></i>No items logged yet.</div>'; return; }
+    list.innerHTML = items.slice(0,10).map(i=>`
+      <div class="found-card">
+        <div class="fc-top">
+          <div>
+            <div class="fc-title">${capType(i.item_type)}: ${trunc(i.description,50)}</div>
+            <div class="fc-loc"><i class="fas fa-map-pin"></i> ${i.location}</div>
+          </div>
+          <span class="fc-time">${ago(i.created_at)}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:5px">
+          <i class="fas fa-archive"></i> ${i.storage_location||'Admin Office'} · ${i.reported_by}
+        </div>
+      </div>`).join('');
+  } catch(e){ list.innerHTML='<div class="empty-state">Could not load.</div>'; }
+}
+
+async function logFound() {
+  const type = document.getElementById('s-itemType').value;
+  const desc = document.getElementById('s-itemDesc').value.trim();
+  if(!type||!desc){ showStatus('staffStatus','Please select category and add a description.','error'); return; }
+  const btn = document.getElementById('logBtn');
+  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Logging…';
+  try {
+    const res = await fetch('/api/log-found',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        item_type: type, description: desc,
+        location: document.getElementById('s-location').value,
+        storage_location: document.getElementById('s-storage').value,
+        reported_by: document.getElementById('s-reporter').value||'Staff'
+      })
+    });
+    const data = await res.json();
+    showStatus('staffStatus',`✓ Item logged (ID: ${data.found_id}). AI will match against open student reports.`,'success');
+    document.getElementById('s-itemType').value='';
+    document.getElementById('s-itemDesc').value='';
+    document.getElementById('s-reporter').value='';
+    loadStaffFoundList(); loadStats();
+  } catch(e){ showStatus('staffStatus','Error logging item. Check server connection.','error'); }
+  btn.disabled=false; btn.innerHTML='<i class="fas fa-check"></i> Log found item';
+}
+
+function showStatus(id,msg,type){ const el=document.getElementById(id); el.textContent=msg; el.className=`status-box show status-${type}`; }
+function capType(s){ const m={'bag':'Bag','electronics':'Electronics','wallet':'Wallet','id_card':'ID Card','stationery':'Stationery','keys':'Keys','clothing':'Clothing','other':'Other'}; return m[s]||s; }
+function trunc(s,n){ return s&&s.length>n?s.slice(0,n)+'…':s; }
+function ago(ts){ const d=(Date.now()-new Date(ts+'Z').getTime())/1000; if(d<3600)return Math.round(d/60)+'m ago'; if(d<86400)return Math.round(d/3600)+'h ago'; return Math.round(d/86400)+'d ago'; }
+
+loadFoundItems();
+loadStats();
+setInterval(()=>loadFoundItems(currentFilter), 60000);
+setInterval(loadStats, 30000);
+</script>
+</body>
+</html>
