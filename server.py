@@ -4,7 +4,7 @@ import sqlite3, json, urllib.request, os
 
 app = Flask(__name__, static_folder='public')
 CORS(app)
-DB = 'db/lostfound.db'
+import os as _os; DB = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'db', 'lostfound.db')
 
 def get_db():
     conn = sqlite3.connect(DB)
@@ -227,7 +227,7 @@ def stats():
                     'total_matched': total_matched, 'total_claimed': total_claimed})
 
 if __name__ == '__main__':
-    os.makedirs('db', exist_ok=True)
+    os.makedirs(os.path.dirname(DB), exist_ok=True)
     init_db()
     print("Server running on http://localhost:5050")
     app.run(host='0.0.0.0', port=5050, debug=False)
